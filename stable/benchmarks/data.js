@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752963713915,
+  "lastUpdate": 1752964343562,
   "repoUrl": "https://github.com/occlum/occlum",
   "entries": {
     "Iperf3 Benchmark": [
@@ -15401,6 +15401,51 @@ window.BENCHMARK_DATA = {
           {
             "name": "Thread 95th Percentile Latency",
             "value": 549.52,
+            "unit": "ms",
+            "extra": "per95"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "zeroy",
+            "email": "zeroy0410@qq.com"
+          },
+          "committer": {
+            "name": "volcano",
+            "username": "volcano0dr",
+            "email": "volcano.dr@hotmail.com"
+          },
+          "id": "690d5dbf34f3b08e4b5e48e16ce16231550e78c4",
+          "message": "fix issue 1686",
+          "timestamp": "2025-06-06T05:22:40Z",
+          "url": "https://github.com/occlum/occlum/commit/690d5dbf34f3b08e4b5e48e16ce16231550e78c4"
+        },
+        "date": 1752964341005,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Threads Minimum latency",
+            "value": 0.54,
+            "unit": "ms",
+            "extra": "min"
+          },
+          {
+            "name": "Threads Average Latency",
+            "value": 78.14,
+            "unit": "ms",
+            "extra": "avg"
+          },
+          {
+            "name": "Threads Maximum Latency",
+            "value": 1738.57,
+            "unit": "ms",
+            "extra": "max"
+          },
+          {
+            "name": "Thread 95th Percentile Latency",
+            "value": 434.83,
             "unit": "ms",
             "extra": "per95"
           }
