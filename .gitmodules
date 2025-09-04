@@ -29,7 +29,7 @@
 	url = https://github.com/occlum/io-uring.git
 [submodule "deps/mlsdisk"]
 	path = deps/mlsdisk
-	url = https://github.com/asterinas/mlsdisk
+	url = https://github.com/bronzeMe/mlsdisk.git
 [submodule "deps/ext2-rs"]
 	path = deps/ext2-rs
 	url = https://github.com/occlum/ext2-rs
