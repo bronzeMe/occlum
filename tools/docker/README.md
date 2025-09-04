@@ -26,6 +26,12 @@ It is optional, if not provided, "master" branch will be used.
 
 The resulting Docker image will have `occlum/occlum:<OCCLUM_LABEL>-<OS_NAME>` as its label.
 
+#### Build image locally
+```bash
+cd occlum
+bash tools/docker/build_image_local_fast.sh 0.31.0-localfast0904 ubuntu22.04
+```
+
 ### Docker image for runtime
 
 Currently, only one Linux OS distributions are supported for runtime docker image: Ubuntu 20.04.
