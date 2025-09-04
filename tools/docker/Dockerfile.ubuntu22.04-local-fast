@@ -1,6 +1,18 @@
 
 FROM occlum/occlum:0.31.0-ubuntu22.04 
 
+# 配置 Cargo 使用中科大镜像源
+RUN mkdir -p /root/.cargo && \
+    echo '[source.crates-io]' > /root/.cargo/config && \
+    echo 'replace-with = "ustc"' >> /root/.cargo/config && \
+    echo '' >> /root/.cargo/config && \
+    echo '[source.ustc]' >> /root/.cargo/config && \
+    echo 'registry = "git://mirrors.ustc.edu.cn/crates.io-index"' >> /root/.cargo/config && \
+    echo '' >> /root/.cargo/config && \
+    echo '[net]' >> /root/.cargo/config && \
+    echo 'git-fetch-with-cli = true' >> /root/.cargo/config && \
+    echo 'retry = 3' >> /root/.cargo/config && \
+    echo 'timeout = 300' >> /root/.cargo/config
 
 # Use local Occlum source code instead of downloading from GitHub
 WORKDIR /root
@@ -18,6 +30,12 @@ RUN mkdir -p /opt/occlum/ && \
 WORKDIR /root
 RUN cd occlum && \
     source /opt/intel/sgxsdk/environment && \
+    # 设置环境变量以优化网络连接
+    export CARGO_NET_TIMEOUT=300 && \
+    export CARGO_NET_RETRY=3 && \
+    export CARGO_HTTP_TIMEOUT=300 && \
+    # 预更新 crates.io 索引
+    cargo search --limit 1 || true && \
     make submodule && \
     OCCLUM_RELEASE_BUILD=1 make install && \
     cp -r demos /root/demos && \
