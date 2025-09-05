@@ -45,9 +45,12 @@ impl DevDisk {
                         RawDisk::open_or_create(total_blocks, image_path.to_str().unwrap())?;
                     let root_key = metadata.root_key;
 
+                    let data_buf_cap = metadata.data_buf_cap;
+                    info!("[DevDisk] Using data_buf_cap: {} blocks", data_buf_cap);
                     let sworndisk = Arc::new(
-                        SwornDisk::open(raw_disk.clone(), root_key, None).unwrap_or_else(|_e| {
-                            SwornDisk::create(raw_disk, root_key, None).unwrap()
+                        SwornDisk::open(raw_disk.clone(), root_key, None, Some(data_buf_cap)).unwrap_or_else(|_e| {
+                            info!("[DevDisk] Creating new SwornDisk with data_buf_cap: {} blocks", data_buf_cap);
+                            SwornDisk::create(raw_disk, root_key, None, Some(data_buf_cap)).unwrap()
                         }),
                     );
                     sworndisk_opt.insert(sworndisk.clone());
@@ -136,6 +139,7 @@ pub struct SwornDiskMeta {
     root_key: AeadKey,
     image_dir: PathBuf,
     is_setup: bool,
+    data_buf_cap: usize,
 }
 
 impl Default for SwornDiskMeta {
@@ -145,6 +149,7 @@ impl Default for SwornDiskMeta {
             root_key: AeadKey::default(),
             image_dir: PathBuf::from("run"),
             is_setup: false,
+            data_buf_cap: 1024, // 默认值与 DATA_BUF_CAP 一致
         }
     }
 }
@@ -154,6 +159,7 @@ impl SwornDiskMeta {
         disk_size: u64,
         user_key: &Option<sgx_key_128bit_t>,
         source_path: Option<&PathBuf>,
+        data_buf_cap: Option<u64>,
     ) -> Result<()> {
         let mut metadata = SWORNDISK_METADATA.write().unwrap();
         if metadata.is_setup {
@@ -165,6 +171,15 @@ impl SwornDiskMeta {
         metadata.size = disk_size as _;
         if let Some(source_path) = source_path {
             metadata.image_dir = source_path.clone();
+        }
+        if let Some(buf_cap_bytes) = data_buf_cap {
+            // 将字节数转换为块数
+            let buf_cap_blocks = (buf_cap_bytes as usize) / BLOCK_SIZE;
+            if buf_cap_blocks < 1024 {
+                return_errno!(EINVAL, "Data buffer capacity too small for SwornDisk (should be at least 1024 blocks)");
+            }
+            metadata.data_buf_cap = buf_cap_blocks;
+            info!("[SwornDiskMeta] Setting data_buf_cap: {} bytes -> {} blocks", buf_cap_bytes, buf_cap_blocks);
         }
         let root_key = if let Some(user_key) = user_key {
             *user_key

@@ -461,6 +461,27 @@ fn main() {
                 println!("The disk_size must be specified for Ext2.");
                 return;
             }
+            
+            if mount.type_ == String::from("ext2") && mount.options.data_buf_cap.is_some() {
+                let data_buf_cap_str = mount.options.data_buf_cap.as_ref().unwrap();
+                let data_buf_cap_bytes = {
+                    let data_buf_cap = parse_memory_size(data_buf_cap_str);
+                    if data_buf_cap.is_err() {
+                        println!("The data_buf_cap \"{}\" is not correct.", data_buf_cap_str);
+                        return;
+                    }
+                    data_buf_cap.unwrap()
+                };
+                // 将字节数转换为块数（4KB块）
+                const BLOCK_SIZE: usize = 0x1000;
+                let data_buf_cap_blocks = data_buf_cap_bytes / BLOCK_SIZE;
+                if data_buf_cap_blocks < 1024 {
+                    println!("The data_buf_cap \"{}\" must be at least {} (1024 blocks of 4KB each).", 
+                             data_buf_cap_str, 
+                             1024 * BLOCK_SIZE);
+                    return;
+                }
+            }
             if let Some(disk_size_str) = mount.options.disk_size.as_ref() {
                 let disk_size = {
                     let disk_size = parse_memory_size(disk_size_str);
@@ -845,6 +866,8 @@ struct OcclumMountOptions {
     pub cache_size: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub disk_size: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data_buf_cap: Option<String>,
 }
 
 #[inline]

@@ -31,11 +31,12 @@ WORKDIR /root
 RUN cd occlum && \
     source /opt/intel/sgxsdk/environment && \
     # 设置环境变量以优化网络连接
-    export CARGO_NET_TIMEOUT=300 && \
     export CARGO_NET_RETRY=3 && \
     export CARGO_HTTP_TIMEOUT=300 && \
     # 预更新 crates.io 索引
     cargo search --limit 1 || true && \
+    # 使用 set -x 输出执行的命令，便于调试
+    set -x && \
     make submodule && \
     OCCLUM_RELEASE_BUILD=1 make install && \
     cp -r demos /root/demos && \

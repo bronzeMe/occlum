@@ -335,7 +335,8 @@ fn setup_disk_meta_for_ext2(mc: &ConfigMount, user_key: &Option<sgx_key_128bit_t
         return_errno!(EINVAL, "Disk size is expected for Ext2");
     }
     let source_path = mc.source.as_ref();
-    SwornDiskMeta::setup(disk_size.unwrap(), user_key, source_path)
+    let data_buf_cap = mc.options.data_buf_cap;
+    SwornDiskMeta::setup(disk_size.unwrap(), user_key, source_path, data_buf_cap)
 }
 
 /// Manage all mounted SEFSes globally.
