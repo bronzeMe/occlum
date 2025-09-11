@@ -46,8 +46,8 @@ impl DevDisk {
                     let root_key = metadata.root_key;
 
                     let sworndisk = Arc::new(
-                        SwornDisk::open(raw_disk.clone(), root_key, None).unwrap_or_else(|_e| {
-                            SwornDisk::create(raw_disk, root_key, None).unwrap()
+                        SwornDisk::open(raw_disk.clone(), root_key, None, None).unwrap_or_else(|_e| {
+                            SwornDisk::create(raw_disk, root_key, None, None).unwrap()
                         }),
                     );
                     sworndisk_opt.insert(sworndisk.clone());
