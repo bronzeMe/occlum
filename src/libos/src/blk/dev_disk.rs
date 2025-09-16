@@ -35,21 +35,55 @@ impl DevDisk {
                     if !metadata.is_setup {
                         return_errno!(EINVAL, "SwornDisk not set up");
                     }
+                    debug!("Setting up SwornDisk with metadata: size={}, image_dir={:?}", metadata.size, metadata.image_dir);
                     let total_blocks = metadata.size / BLOCK_SIZE;
                     let image_path = {
                         let mut path = metadata.image_dir.clone();
                         path.push("sworndisk.image");
+                        debug!("SwornDisk image path: {:?}", path);
                         path
                     };
-                    let raw_disk =
-                        RawDisk::open_or_create(total_blocks, image_path.to_str().unwrap())?;
+                    let raw_disk = {
+                        debug!("Creating RawDisk with {} blocks at {:?}", total_blocks, image_path);
+                        match RawDisk::open_or_create(total_blocks, image_path.to_str().unwrap()) {
+                            Ok(disk) => {
+                                debug!("RawDisk created successfully");
+                                disk
+                            }
+                            Err(e) => {
+                                error!("Failed to create RawDisk: {:?}", e);
+                                return Err(e);
+                            }
+                        }
+                    };
                     let root_key = metadata.root_key;
+                    let enable_read_cache = metadata.enable_read_cache;
 
-                    let sworndisk = Arc::new(
-                        SwornDisk::open(raw_disk.clone(), root_key, None).unwrap_or_else(|_e| {
-                            SwornDisk::create(raw_disk, root_key, None).unwrap()
-                        }),
-                    );
+                    let sworndisk = Arc::new({
+                        // CRITICAL FIX: Better error handling for SwornDisk creation
+                        // First try to open existing SwornDisk
+                        debug!("Attempting to open existing SwornDisk with read_cache={}", enable_read_cache);
+                        match SwornDisk::open(raw_disk.clone(), root_key, None, enable_read_cache) {
+                            Ok(disk) => {
+                                debug!("Successfully opened existing SwornDisk");
+                                disk
+                            }
+                            Err(open_err) => {
+                                debug!("Failed to open SwornDisk: {:?}, attempting to create new one", open_err);
+                                // If open fails, try to create new SwornDisk
+                                match SwornDisk::create(raw_disk, root_key, None, enable_read_cache) {
+                                    Ok(disk) => {
+                                        debug!("Successfully created new SwornDisk");
+                                        disk
+                                    }
+                                    Err(create_err) => {
+                                        error!("Failed to create SwornDisk: {:?}", create_err);
+                                        return_errno!(EINVAL, "Failed to initialize SwornDisk");
+                                    }
+                                }
+                            }
+                        }
+                    });
                     sworndisk_opt.insert(sworndisk.clone());
                     sworndisk
                 }
@@ -136,6 +170,7 @@ pub struct SwornDiskMeta {
     root_key: AeadKey,
     image_dir: PathBuf,
     is_setup: bool,
+    enable_read_cache: bool,
 }
 
 impl Default for SwornDiskMeta {
@@ -145,6 +180,7 @@ impl Default for SwornDiskMeta {
             root_key: AeadKey::default(),
             image_dir: PathBuf::from("run"),
             is_setup: false,
+            enable_read_cache: true,  // Default to enabled for backward compatibility
         }
     }
 }
@@ -154,6 +190,7 @@ impl SwornDiskMeta {
         disk_size: u64,
         user_key: &Option<sgx_key_128bit_t>,
         source_path: Option<&PathBuf>,
+        enable_read_cache: bool,
     ) -> Result<()> {
         let mut metadata = SWORNDISK_METADATA.write().unwrap();
         if metadata.is_setup {
@@ -172,6 +209,7 @@ impl SwornDiskMeta {
             get_autokey(&metadata.image_dir)?
         };
         metadata.root_key = AeadKey::from(root_key);
+        metadata.enable_read_cache = enable_read_cache;
         metadata.is_setup = true;
         Ok(())
     }

@@ -193,6 +193,7 @@ pub struct ConfigMountOptions {
     pub cache_size: Option<u64>,
     pub disk_size: Option<u64>,
     pub index: u32,
+    pub enable_read_cache: bool,
 }
 
 impl Config {
@@ -378,6 +379,7 @@ impl ConfigMountOptions {
             cache_size,
             disk_size,
             index: input.index,
+            enable_read_cache: input.enable_read_cache,
         })
     }
 }
@@ -530,6 +532,8 @@ struct InputConfigMountOptions {
     pub disk_size: Option<String>,
     #[serde(default)]
     pub index: u32,
+    #[serde(default)]
+    pub enable_read_cache: bool,
 }
 
 #[derive(Deserialize, Debug)]

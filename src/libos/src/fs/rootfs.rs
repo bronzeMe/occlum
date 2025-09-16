@@ -316,13 +316,14 @@ fn format_disk_for_ext2() -> Result<Arc<dyn BlockDevice>> {
     let path = PathBuf::from("/sbin/mke2fs");
     let argv = vec![
         CString::new("mke2fs").unwrap(),
+        CString::new("-F").unwrap(),  // CRITICAL FIX: Force format, skip mount check
         CString::new("-q").unwrap(),
         CString::new("-t").unwrap(),
         CString::new("ext2").unwrap(),
         CString::new("/dev/".to_owned() + DEV_SWORNDISK).unwrap(),
     ];
     let pid = process::do_spawn(&path.to_str().unwrap(), &argv, &[], &[], None, &current!())?;
-    let _ = process::do_wait4(pid as _, core::ptr::null_mut(), 0)?;
+    let _ = process::do_wait4(pid as _, core::ptr::null_mut(), 0)?;  
 
     let sworndisk = DevDisk::open_or_create(DEV_SWORNDISK)?.disk();
     Ok(sworndisk)
@@ -335,7 +336,8 @@ fn setup_disk_meta_for_ext2(mc: &ConfigMount, user_key: &Option<sgx_key_128bit_t
         return_errno!(EINVAL, "Disk size is expected for Ext2");
     }
     let source_path = mc.source.as_ref();
-    SwornDiskMeta::setup(disk_size.unwrap(), user_key, source_path)
+    let enable_read_cache = mc.options.enable_read_cache;
+    SwornDiskMeta::setup(disk_size.unwrap(), user_key, source_path, enable_read_cache)
 }
 
 /// Manage all mounted SEFSes globally.
