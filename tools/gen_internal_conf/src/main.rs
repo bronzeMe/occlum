@@ -845,6 +845,8 @@ struct OcclumMountOptions {
     pub cache_size: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub disk_size: Option<String>,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub enable_read_cache: bool,
 }
 
 #[inline]
