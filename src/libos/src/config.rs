@@ -192,6 +192,7 @@ pub struct ConfigMountOptions {
     pub temporary: bool,
     pub cache_size: Option<u64>,
     pub disk_size: Option<u64>,
+    pub data_buf_cap: Option<u64>,
     pub index: u32,
 }
 
@@ -371,12 +372,14 @@ impl ConfigMountOptions {
         } else {
             None
         };
+        let data_buf_cap = input.data_buf_cap;
         Ok(ConfigMountOptions {
             mac,
             layers,
             temporary: input.temporary,
             cache_size,
             disk_size,
+            data_buf_cap,
             index: input.index,
         })
     }
@@ -528,6 +531,8 @@ struct InputConfigMountOptions {
     pub cache_size: Option<String>,
     #[serde(default)]
     pub disk_size: Option<String>,
+    #[serde(default)]
+    pub data_buf_cap: Option<u64>,
     #[serde(default)]
     pub index: u32,
 }

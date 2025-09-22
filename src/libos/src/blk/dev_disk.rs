@@ -44,10 +44,10 @@ impl DevDisk {
                     let raw_disk =
                         RawDisk::open_or_create(total_blocks, image_path.to_str().unwrap())?;
                     let root_key = metadata.root_key;
-
+                    let data_buf_cap = metadata.data_buf_cap.unwrap_or(1024); // Default to 1024 if not specified
                     let sworndisk = Arc::new(
-                        SwornDisk::open(raw_disk.clone(), root_key, None).unwrap_or_else(|_e| {
-                            SwornDisk::create(raw_disk, root_key, None).unwrap()
+                        SwornDisk::open(raw_disk.clone(), root_key, None, data_buf_cap).unwrap_or_else(|_e| {
+                            SwornDisk::create(raw_disk, root_key, None, data_buf_cap).unwrap()
                         }),
                     );
                     sworndisk_opt.insert(sworndisk.clone());
@@ -133,6 +133,7 @@ fn rw_args_block_aligned(offset: usize, buf_len: usize) -> bool {
 #[derive(Debug)]
 pub struct SwornDiskMeta {
     size: usize,
+    data_buf_cap: Option<usize>,
     root_key: AeadKey,
     image_dir: PathBuf,
     is_setup: bool,
@@ -142,6 +143,7 @@ impl Default for SwornDiskMeta {
     fn default() -> Self {
         Self {
             size: 0,
+            data_buf_cap: None,
             root_key: AeadKey::default(),
             image_dir: PathBuf::from("run"),
             is_setup: false,
@@ -152,6 +154,7 @@ impl Default for SwornDiskMeta {
 impl SwornDiskMeta {
     pub fn setup(
         disk_size: u64,
+        data_buf_cap: Option<u64>,
         user_key: &Option<sgx_key_128bit_t>,
         source_path: Option<&PathBuf>,
     ) -> Result<()> {
@@ -163,6 +166,7 @@ impl SwornDiskMeta {
             return_errno!(EINVAL, "Disk size too small for SwornDisk");
         };
         metadata.size = disk_size as _;
+        metadata.data_buf_cap = data_buf_cap.map(|cap| cap as _);
         if let Some(source_path) = source_path {
             metadata.image_dir = source_path.clone();
         }

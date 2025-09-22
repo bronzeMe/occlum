@@ -478,6 +478,17 @@ fn main() {
                     return;
                 }
             }
+            if let Some(data_buf_cap) = mount.options.data_buf_cap {
+                const MIN_DATA_BUF_CAP: usize = 1024;
+                const MAX_DATA_BUF_CAP: usize = 32768;
+                if data_buf_cap < MIN_DATA_BUF_CAP as u64 || data_buf_cap > MAX_DATA_BUF_CAP as u64 {
+                    println!(
+                        "The data_buf_cap \"{}\" is out of range. Valid range is [{}, {}].",
+                        data_buf_cap, MIN_DATA_BUF_CAP, MAX_DATA_BUF_CAP
+                    );
+                    return;
+                }
+            }
         }
 
         let kss_tuple = parse_kss_conf(&occlum_config);
@@ -845,6 +856,8 @@ struct OcclumMountOptions {
     pub cache_size: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub disk_size: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data_buf_cap: Option<u64>,
 }
 
 #[inline]
