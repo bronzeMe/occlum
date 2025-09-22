@@ -45,5 +45,5 @@ check_item_in_list "$os_name" "ubuntu22.04" || report_error
 
 # 切换到Occlum根目录，确保Docker构建上下文正确
 cd "$script_dir/../.."
-docker build --no-cache-f "$script_dir/Dockerfile.$os_name-local-fast" -t "occlum/occlum:$occlum_label-$os_name-local-fast" .
+docker build --no-cache -f "$script_dir/Dockerfile.$os_name-local-fast" -t "occlum/occlum:$occlum_label-$os_name-local-fast" .
 
